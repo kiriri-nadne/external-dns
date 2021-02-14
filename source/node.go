@@ -169,6 +169,23 @@ func (ns *nodeSource) Endpoints(ctx context.Context) ([]*endpoint.Endpoint, erro
 }
 
 func (ns *nodeSource) AddEventHandler(ctx context.Context, handler func()) {
+	log.Debug("Adding event handler for node")
+
+	// Right now there is no way to remove event handler from informer, see:
+	// https://github.com/kubernetes/kubernetes/issues/79610
+	ns.nodeInformer.Informer().AddEventHandler(
+		cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj interface{}) {
+				handler()
+			},
+			UpdateFunc: func(old interface{}, new interface{}) {
+				handler()
+			},
+			DeleteFunc: func(obj interface{}) {
+				handler()
+			},
+		},
+	)
 }
 
 // nodeAddress returns node's externalIP and if that's not found, node's internalIP
